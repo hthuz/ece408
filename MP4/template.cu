@@ -11,15 +11,55 @@
   } while (0)
 
 //@@ Define any useful program-wide constants here
-#define TILE_WIDTH 16
+#define TILE_WIDTH 4
 #define MASK_WIDTH 3
+#define MASK_RADIUS 1
 
 //@@ Define constant memory for device kernel here
-__constant__ float *kernel; // kernel in const memory
+// __constant__ float *kernel; // kernel in const memory
+__constant__ float kernel[MASK_WIDTH][MASK_WIDTH][MASK_WIDTH];
 
 __global__ void conv3d(float *input, float *output, const int z_size,
                        const int y_size, const int x_size) {
   //@@ Insert kernel code here
+  int tx = threadIdx.x;
+  int ty = threadIdx.y;
+  int tz = threadIdx.z;
+  int z_o = blockIdx.z * TILE_WIDTH + tz;
+  int y_o = blockIdx.y * TILE_WIDTH + ty; 
+  int x_o = blockIdx.x * TILE_WIDTH + tx;
+  int z_i = z_o - MASK_RADIUS;
+  int y_i = y_o - MASK_RADIUS;
+  int x_i = x_o - MASK_RADIUS;
+
+  __shared__ float tile[TILE_WIDTH + MASK_WIDTH - 1][TILE_WIDTH + MASK_WIDTH - 1][TILE_WIDTH + MASK_WIDTH - 1];
+  float val = 0.0f;
+  // Loading to shared memory
+  if(x_i >= 0 && x_i < x_size && 
+     y_i >= 0 && y_i < y_size && 
+     z_i >= 0 && z_i < z_size)
+        tile[tz][ty][tx] = input[z_i * y_size * x_size + y_i * x_size + x_i];
+    else
+        tile[tz][ty][tx]  = 0.0f;
+
+  __syncthreads();
+
+  if(tz < TILE_WIDTH && ty < TILE_WIDTH && tx < TILE_WIDTH) {
+
+        for(int i = 0; i < MASK_WIDTH; i++) {
+            for(int j = 0; j < MASK_WIDTH; j++ ) {
+                for(int k = 0; k < MASK_WIDTH; k++) {
+                    // val += kernel[i * TILE_WIDTH * TILE_WIDTH + j * TILE_WIDTH + k] * tile[i + tz][j + ty][k + tx];
+                    val += kernel[i][j][k] * tile[i + tz][j + ty][k + tx];
+                }
+            }
+        }
+        if (z_o < z_size && y_o < y_size && x_o < x_size) 
+            output[z_o * y_size * x_size + y_o * x_size + x_o] = val;
+  }
+
+
+ 
 }
 
 int main(int argc, char *argv[]) {
@@ -51,6 +91,7 @@ int main(int argc, char *argv[]) {
   assert(kernelLength == 27);
 
   wbTime_start(GPU, "Doing GPU Computation (memory + compute)");
+
 
   wbTime_start(GPU, "Doing GPU memory allocation");
   //@@ Allocate GPU memory here
