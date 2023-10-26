@@ -6,7 +6,7 @@
 
 #include <wb.h>
 
-#define BLOCK_SIZE 512 //@@ You can change this
+#define BLOCK_SIZE 1024 //@@ You can change this
 
 #define wbCheck(stmt)                                                     \
   do {                                                                    \
@@ -23,6 +23,38 @@ __global__ void scan(float *input, float *output, int len) {
   //@@ the scan on the device
   //@@ You may need multiple kernel calls; write your kernels before this
   //@@ function and call them from the host
+    __shared__ float T[2 *  BLOCK_SIZE]; 
+    // Loading shared mem
+    int i = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
+    T[2 * threadIdx.x] = i < len ? input[i] : 0;
+    T[2 * threadIdx.x + 1] = i + 1 < len ? input[i + 1] : 0;
+    __syncthreads();
+
+    // Reduction step
+    int stride = 1;
+    while(stride < 2 * BLOCK_SIZE) {
+        __syncthreads();
+        int index = (threadIdx.x + 1) * stride * 2 - 1;
+        if(index < 2 * BLOCK_SIZE && index - stride >= 0)
+            T[index] += T[index - stride];
+        stride *= 2;
+    }
+
+    // Post scan step
+    stride = BLOCK_SIZE / 2;
+    while(stride > 0) {
+        __syncthreads();
+        int index = (threadIdx.x + 1) * stride + 2 - 1;
+        if(index + stride < 2 * BLOCK_SIZE)
+            T[index + stride] += T[index];
+        stride /= 2;
+    }
+
+    if (i < len)
+        output[i] = T[2 * threadIdx.x];
+    if (i + 1 < len)
+        output[i + 1] = T[2 * threadIdx.x + 1];
+
 }
 
 int main(int argc, char **argv) {
@@ -58,10 +90,14 @@ int main(int argc, char **argv) {
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
   //@@ Initialize the grid and block dimensions here
+  wbLog(TRACE, "DIM GRID: ", ceil(numElements * 1.0 / (2.0 * BLOCK_SIZE)));
+  dim3 DimGrid(ceil(numElements * 1.0 / (2.0 * BLOCK_SIZE)), 1, 1);
+  dim3 DimBlock(BLOCK_SIZE, 1, 1);
 
   wbTime_start(Compute, "Performing CUDA computation");
   //@@ Modify this to complete the functionality of the scan
   //@@ on the deivce
+  scan<<<DimGrid, DimBlock>>>(deviceInput, deviceOutput, numElements);
 
   cudaDeviceSynchronize();
   wbTime_stop(Compute, "Performing CUDA computation");
@@ -78,6 +114,10 @@ int main(int argc, char **argv) {
 
   wbSolution(args, hostOutput, numElements);
 
+  wbLog(TRACE, "Output[0] ",hostOutput[0]);
+  wbLog(TRACE, "Output[1] ",hostOutput[1]);
+  wbLog(TRACE, "Output[2] ",hostOutput[2]);
+  wbLog(TRACE, "Output[3] ",hostOutput[3]);
   free(hostInput);
   free(hostOutput);
 
