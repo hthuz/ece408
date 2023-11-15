@@ -1,5 +1,7 @@
 #include <wb.h>
 
+#define BLOCK_SIZE 128
+
 #define wbCheck(stmt)                                                     \
   do {                                                                    \
     cudaError_t err = stmt;                                               \
@@ -14,11 +16,22 @@ __global__ void spmvJDSKernel(float *out, int *matColStart, int *matCols,
                               int *matRowPerm, int *matRows,
                               float *matData, float *vec, int dim) {
   //@@ insert spmv kernel for jds format
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if(row < dim) {
+        float dot = 0;
+        unsigned int sec = 0;
+        while(sec < matRows[row]) {
+            dot += matData[matColStart[sec] + row] * vec[matCols[matColStart[sec] + row]];
+            sec++;
+        }
+        out[matRowPerm[row]] = dot;
+    }
 }
 
 static void spmvJDS(float *out, int *matColStart, int *matCols,
                     int *matRowPerm, int *matRows, float *matData,
                     float *vec, int dim) {
+    spmvJDSKernel<<<ceil((1.0 * dim) / (1.0 * BLOCK_SIZE)), BLOCK_SIZE>>>(out, matColStart, matCols, matRowPerm, matRows, matData,vec,dim);
 
   //@@ invoke spmv kernel for jds format
 }
@@ -91,6 +104,10 @@ int main(int argc, char **argv) {
   wbTime_start(Copy, "Copying output memory to the CPU");
   cudaMemcpy(hostOutput, deviceOutput, sizeof(float) * dim, cudaMemcpyDeviceToHost);
   wbTime_stop(Copy, "Copying output memory to the CPU");
+
+    // for(int i = 0; i < dim; i++) {
+    //     wbLog(TRACE, hostOutput[i]);
+    // }
 
   wbTime_start(GPU, "Freeing GPU Memory");
   cudaFree(deviceVector);

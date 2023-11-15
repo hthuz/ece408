@@ -14,17 +14,17 @@ __global__ void float_2uchar(float *input , unsigned char* output, int size)
         output[i] = (unsigned char)(255 * input[i]);
 }
 
-__global__ void rgb_2gray(unsigned char* input, unsigned char* output, int gsize)
+__global__ void rgb_2gray(unsigned char* input, unsigned char* output, int gsize, int imageChannels)
 {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     if(i < gsize)
-        output[i] = 0.21 * input[3 * i] + 0.71 * input[3 * i + 1] + 0.07 * input[3 * i + 2];
+        output[i] = (unsigned char)(0.21 * input[imageChannels * i] + 0.71 * input[imageChannels * i + 1] + 0.07 * input[imageChannels * i + 2]);
 }
 
 __global__ void histo_kernel(unsigned char* buffer, int gsize, unsigned int *histo)
 {
     __shared__ unsigned int histo_private[HISTOGRAM_LENGTH];
-    if(threadIdx.x < 256)
+    if(threadIdx.x < HISTOGRAM_LENGTH)
         histo_private[threadIdx.x] = 0;
     __syncthreads();
 
@@ -79,25 +79,28 @@ __global__ void scan(unsigned int *input, float *output, float *output_min, int 
         output[i + 1] = T[2 * threadIdx.x + 1];
 
     if (threadIdx.x == 0)
-        output_min[0] = input[0];
+        output_min[0] = p(input[0]);
 
     #undef p
 }
 
 __global__  void histo_equalization(unsigned char* input, unsigned char* output, float* CDF, float* CDFmin, int size)
 {
-    #define clamp(x,start,end) (min(max(x, start), end))
-    #define correct_color(val) (clamp(255 * (CDF[val] - cdfmin) / (1.0 - CDFmin[0]), 0, 255.0 ))
+    // #define clamp(x,start,end) (min(max(x, start), end))
+    // #define correct_color(val) (clamp(255 * (CDF[val] - CDFmin[0]) / (1.0 - CDFmin[0]), 0.0, 255.0 ))
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     if (i < size)
-        output[i] = correct_color(input[i]);
+        output[i] = (unsigned char) min(max(255 * (CDF[(int) input[i]] - CDF[0]) / (1.0 - CDF[0]),0.0),255.0);
+        // output[i] = correct_color(input[i]);
+    // #undef correct_color
+    // #undef clamp
 }
 
 __global__ void uchar_2float(unsigned char *input , float* output, int size)
 {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     if(i < size)
-        output[i] = (float) (input[i] / 255.0)
+        output[i] = (float) (input[i] / 255.0);
 }
 
 int main(int argc, char **argv) {
@@ -132,25 +135,65 @@ int main(int argc, char **argv) {
     // Step 1: float to uchar
     int size = imageWidth * imageHeight * imageChannels;
     int gsize = imageWidth * imageHeight; // Grayscale image size
+    wbLog(TRACE, "size is ",size, " gray size is ", gsize);
     float* devInputImageData;
     unsigned char* devUcharImage;
-    int dimgrid = ceil((1.0 * size) / (1.0 * BLOCK_SIZE));
     cudaMalloc((void**)&devInputImageData, size * sizeof(float));
     cudaMalloc((void**)&devUcharImage, size * sizeof(unsigned char));
     cudaMemcpy(devInputImageData, hostInputImageData, size * sizeof(float), cudaMemcpyHostToDevice);
     float_2uchar<<<ceil( (1.0 * size) / (1.0 * BLOCK_SIZE) ), BLOCK_SIZE>>>(devInputImageData, devUcharImage, size);
 
+    // -------------------------------
+    // PRINT
+    // -------------------------------
+    // unsigned char* hostUcharImage;
+    // hostUcharImage = (unsigned char*) malloc(size * sizeof(unsigned char));
+    // cudaMemcpy(hostUcharImage, devUcharImage, size * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+    // for(int i = size - 20; i < size; i++) {
+    //     wbLog(TRACE, "floatin: ", hostInputImageData[i], " char: ", (int) hostUcharImage[i] );
+    // }
+    // -------------------------------
+    // -------------------------------
+
+
     // Step 2: RGB to grayscale
     unsigned char* devGrayImage;
     cudaMalloc((void**)&devGrayImage, gsize * sizeof(unsigned char));
-    rgb_2gray<<<ceil( (1.0 * gsize) / (1.0 * BLOCK_SIZE) ), BLOCK_SIZE>>>(devUcharImage,devGrayImage,gsize);
+    rgb_2gray<<<ceil( (1.0 * gsize) / (1.0 * BLOCK_SIZE) ), BLOCK_SIZE>>>(devUcharImage,devGrayImage,gsize, imageChannels);
+
+    // -------------------------------
+    // PRINT
+    // -------------------------------
+    // unsigned char* hostGrayImage;
+    // hostGrayImage = (unsigned char*) malloc(size * sizeof(unsigned char));
+    // cudaMemcpy(hostGrayImage, devGrayImage, size * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+    // for(int i = 0; i < 10; i++) {
+    //     wbLog(TRACE, "gray image: ", (int) hostGrayImage[i]);
+    // }
+    // -------------------------------
+    // -------------------------------
     
-    // Step 3: Histogram to grayImage
-    // unsigned int hostHisto[HISTOGRAM_LENGTH] = {0};
+    // Step 3: Histogram of grayImage
     unsigned int* devHisto;
-    cudaMalloc((void**)&devHisto, gsize * sizeof(unsigned char));
-    cudaMemset(devHisto, 0, gsize * sizeof(unsigned char));
+    cudaMalloc((void**)&devHisto, HISTOGRAM_LENGTH * sizeof(int));
+    cudaMemset(devHisto, 0, HISTOGRAM_LENGTH * sizeof(int));
     histo_kernel<<<ceil( (1.0 * gsize) / (1.0 * BLOCK_SIZE) ), BLOCK_SIZE>>>(devGrayImage, gsize, devHisto);
+
+    // -------------------------------
+    // PRINT
+    // -------------------------------
+    // int* hostHisto;
+    // hostHisto = (int*) malloc(size * sizeof(int));
+    // cudaMemcpy(hostHisto, devHisto, HISTOGRAM_LENGTH * sizeof(int), cudaMemcpyDeviceToHost);
+    // int sum = 0;
+    // for(int i = 0; i < HISTOGRAM_LENGTH; i++) {
+    //     wbLog(TRACE, i , " histo: ", hostHisto[i]);
+    //     sum += hostHisto[i];
+    // }
+    // wbLog(TRACE, "Sum: ", sum);
+    // -------------------------------
+    // -------------------------------
+
 
     // Step 4: scan to compute cdf
     float* devCDF;
@@ -159,16 +202,60 @@ int main(int argc, char **argv) {
     cudaMalloc((void**)&devCDFmin, 1 * sizeof(float));
     scan<<<1,BLOCK_SIZE>>>(devHisto, devCDF,devCDFmin, HISTOGRAM_LENGTH, gsize );
 
+    // -------------------------------
+    // PRINT
+    // -------------------------------
+    // float* hostCDF;
+    // float* hostCDFmin;
+    // hostCDF = (float*) malloc(HISTOGRAM_LENGTH * sizeof(float));
+    // hostCDFmin = (float*) malloc(1 * sizeof(float));
+    // cudaMemcpy(hostCDF, devCDF, HISTOGRAM_LENGTH * sizeof(float), cudaMemcpyDeviceToHost);
+    // cudaMemcpy(hostCDFmin, devCDFmin, 1 * sizeof(float), cudaMemcpyDeviceToHost);
+    // for(int i = HISTOGRAM_LENGTH - 100; i < HISTOGRAM_LENGTH; i++) {
+    //     wbLog(TRACE, i , " cdf: ", hostCDF[i]);
+    // }
+    // wbLog(TRACE, "CDFmin: ", hostCDFmin[0]);
+    // -------------------------------
+    // -------------------------------
+
+
+
     // Step 5: apply histogram equalization function
     unsigned char* devUcharImageCorrected;
     cudaMalloc((void**)&devUcharImageCorrected, size * sizeof(unsigned char));
-    histo_equalization<<<ceil( (1.0 * size) / (1.0 * BLOCK_SIZE) )>>>(devUcharImage,devUcharImageCorrected,devCDF, devCDFmin, size);
+    histo_equalization<<<ceil( (1.0 * size) / (1.0 * BLOCK_SIZE) ),BLOCK_SIZE>>>(devUcharImage,devUcharImageCorrected,devCDF, devCDFmin, size);
+
+    // -------------------------------
+    // PRINT
+    // -------------------------------
+    // unsigned char* hostUcharImageCorrected;
+    // hostUcharImageCorrected = (unsigned char*) malloc(size * sizeof(unsigned char));
+    // cudaMemcpy(hostUcharImageCorrected, devUcharImageCorrected, size * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+    // for(int i = size - 20; i < size; i++) {
+    //     wbLog(TRACE, i , " corrected: ", (int) hostUcharImageCorrected[i]);
+    // }
+
+    // -------------------------------
+    // -------------------------------
 
     // Step 6: uchar to float
     float* devOutputImageData;
     cudaMalloc((void**)&devOutputImageData, size * sizeof(float));
-    float_2uchar<<<ceil( (1.0 * size) / (1.0 * BLOCK_SIZE) ), BLOCK_SIZE>>>(devUcharImageCorrected, devOutputImageData, size);
-    cudaMemcpy(hostOutputImageData, devOutputImageData, size * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+    uchar_2float<<<ceil( (1.0 * size) / (1.0 * BLOCK_SIZE) ), BLOCK_SIZE>>>(devUcharImageCorrected, devOutputImageData, size);
+    cudaMemcpy(hostOutputImageData, devOutputImageData, size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+
+    // -------------------------------
+    // PRINT
+    // -------------------------------
+    // for(int i = 0; i < 200; i++) {
+    //     wbLog(TRACE, i , " output: ", hostOutputImageData[i]);
+    // }
+
+    // -------------------------------
+    // -------------------------------
+
+    wbExport("outputimg.ppm", outputImage);
 
   wbSolution(args, outputImage);
 
