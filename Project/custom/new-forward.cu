@@ -16,10 +16,6 @@
 __global__ void conv_forward_kernel(float *output, const float *input, const float *mask, const int B, const int M, const int C, const int H, const int W, const int K,const int S)
 {
     /*
-    Modify this function to implement the forward pass described in Chapter 16.
-    We have added an additional dimension to the tensors to support an entire mini-batch
-    The goal here is to be correct AND fast.
-
     Function paramter definitions:
     output - output
     input - input
@@ -35,13 +31,6 @@ __global__ void conv_forward_kernel(float *output, const float *input, const flo
 
     const int H_out = (H - K)/S + 1;
     const int W_out = (W - K)/S + 1;
-    (void)H_out; // silence declared but never referenced warning. remove this line when you start working
-    (void)W_out; // silence declared but never referenced warning. remove this line when you start working
-
-    // We have some nice #defs for you below to simplify indexing. Feel free to use them, or create your own.
-    // An example use of these macros:
-    // float a = in_4d(0,0,0,0)
-    // out_4d(0,0,0,0) = a
 
     #define out_4d(i3, i2, i1, i0) output[(i3) * (M * H_out * W_out) + (i2) * (H_out * W_out) + (i1) * (W_out) + i0]
     #define in_4d(i3, i2, i1, i0) input[(i3) * (C * H * W) + (i2) * (H * W) + (i1) * (W) + i0]
@@ -86,16 +75,6 @@ __host__ void GPUInterface::conv_forward_gpu_prolog(const float *host_output, co
     wbCheck(cudaMalloc((void**)device_mask_ptr, num_mask_elts * sizeof(float)));
     wbCheck(cudaMemcpy(*device_input_ptr, host_input, num_input_elts * sizeof(float), cudaMemcpyHostToDevice));
     wbCheck(cudaMemcpy(*device_mask_ptr, host_mask, num_mask_elts * sizeof(float), cudaMemcpyHostToDevice));
-    // We pass double pointers for you to initialize the relevant device pointers,
-    //  which are passed to the other two functions.
-
-    // Useful snippet for error checking
-    // cudaError_t error = cudaGetLastError();
-    // if(error != cudaSuccess)
-    // {
-    //     std::cout<<"CUDA error: "<<cudaGetErrorString(error)<<std::endl;
-    //     exit(-1);
-    // }
    
 }
 
