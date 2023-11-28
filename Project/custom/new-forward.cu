@@ -43,14 +43,44 @@ __global__ void conv_forward_kernel(float *output, const float *input, const flo
     int h = (blockIdx.y / W_grid) * TILE_WIDTH + threadIdx.y;
     int w = (blockIdx.y % W_grid) * TILE_WIDTH + threadIdx.x;
     int b = blockIdx.z;
+
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+    int MASK_RADIUS =  K / 2;
+    __shared__ float tile[TILE_WIDTH][TILE_WIDTH];
+
     if(w < W_out && h < H_out) {
         float acc = 0.0f;
         for(int c = 0 ; c < C; c++) {
-            for(int p = 0; p < K; p++) {
-                for(int q = 0; q < K; q++) {
-                    acc += in_4d(b, c, h * S + p, w * S + q) * mask_4d(m,c,p,q);
+
+            // Load into shared mem, using strategy 3
+            tile[ty][tx] = in_4d(b,c, h * S + MASK_RADIUS, w * S + MASK_RADIUS);
+            __syncthreads();
+            int this_tile_start_y = (blockIdx.y / W_grid) * S * TILE_WIDTH + MASK_RADIUS;
+            int this_tile_start_x = (blockIdx.y % W_grid) * S * TILE_WIDTH + MASK_RADIUS;
+            int next_tile_start_y = (blockIdx.y / W_grid + 1) * S * TILE_WIDTH + MASK_RADIUS;
+            int next_tile_start_x = (blockIdx.y % W_grid + 1) * S * TILE_WIDTH + MASK_RADIUS;
+            int start_y = h * S;
+            int start_x = w * S;
+
+            for(int i = 0; i < K; i++) {
+                for(int j = 0; j < K; j++) {
+                    int index_y = start_y + i;
+                    int index_x = start_x + j;
+                    if (index_y >= this_tile_start_y && index_y < next_tile_start_y && index_y < H - MASK_RADIUS && 
+                        index_x >= this_tile_start_x && index_x < next_tile_start_x && index_x < W - MASK_RADIUS && 
+                        MASK_RADIUS >= S)
+                        acc += tile[ty - MASK_RADIUS + i][tx - MASK_RADIUS + j] * mask_4d(m,c,i,j); // From shared 
+                    else
+                        acc += in_4d(b,c,index_y,index_x) * mask_4d(m,c,i,j); // From global
                 }
-            }
+             }
+            __syncthreads();
+            // for(int p = 0; p < K; p++) {
+            //     for(int q = 0; q < K; q++) {
+            //         acc += in_4d(b, c, h * S + p, w * S + q) * mask_4d(m,c,p,q);
+            //     }
+            // }
         }
         out_4d(b,m,h,w) = acc;
     }
