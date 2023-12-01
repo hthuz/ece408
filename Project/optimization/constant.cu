@@ -13,7 +13,7 @@
     }                                                                     \
   } while (0)
 
-__constant__ float maskc[81];
+__constant__ float maskc[4096];
 
 // __global__ void conv_forward_kernel(float *output, const float *input, const float *mask, const int B, const int M, const int C, const int H, const int W, const int K,const int S)
 __global__ void conv_forward_kernel(float *output, const float *input, const int B, const int M, const int C, const int H, const int W, const int K,const int S)
