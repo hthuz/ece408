@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include "gpu-new-forward.h"
+#include <cuda_fp16.h>
 
 #define TILE_WIDTH 16
 
@@ -13,84 +14,53 @@
     }                                                                     \
   } while (0)
 
-__global__ void unroll_input_kernel(const int B, const int C, const int H, const int W, const int K,const int S, const float* input, float* output)
+__global__ void conv_forward_kernel(float *output, const float *input, const float *mask, const int B, const int M, const int C, const int H, const int W, const int K,const int S)
 {
-    int H_out = (H - K) / S + 1;
-    int W_out = (W - K) / S + 1;
-    #define in_4d(i3, i2, i1, i0) input[(i3) * (C * H * W) + (i2) * (H * W) + (i1) * (W) + i0]
-    #define unroll_4d(i2,i1,i0) output[(i2) * (K * K * C * H_out * W_out) + (i1) * (H_out * W_out) + i0]
+    /*
+    Function paramter definitions:
+    output - output
+    input - input
+    mask - convolution kernel
+    B - batch_size (number of images in x)
+    M - number of output feature maps
+    C - number of input feature maps
+    H - input height dimension
+    W - input width dimension
+    K - kernel height and width (K x K)
+    S - stride step length
+    */
 
+    const int H_out = (H - K)/S + 1;
+    const int W_out = (W - K)/S + 1;
+
+    #define out_4d(i3, i2, i1, i0) output[(i3) * (M * H_out * W_out) + (i2) * (H_out * W_out) + (i1) * (W_out) + i0]
+    #define in_4d(i3, i2, i1, i0) input[(i3) * (C * H * W) + (i2) * (H * W) + (i1) * (W) + i0]
+    #define mask_4d(i3, i2, i1, i0) mask[(i3) * (C * K * K) + (i2) * (K * K) + (i1) * (K) + i0]
+
+    // Insert your GPU convolution kernel code here
     int W_grid = ceil((W_out * 1.0) / (TILE_WIDTH * 1.0));
     int H_grid = ceil((H_out * 1.0) / (TILE_WIDTH * 1.0));
-    int c = blockIdx.x;
+    int m = blockIdx.x;
     int h = (blockIdx.y / W_grid) * TILE_WIDTH + threadIdx.y;
     int w = (blockIdx.y % W_grid) * TILE_WIDTH + threadIdx.x;
     int b = blockIdx.z;
-    if(h < H_out && w < W_out) 
-    {
-        // for(int c = 0; c < C; c++) {
-            int w_base = c * (K * K);
-            for(int p = 0; p < K; ++p) {
-                for(int q = 0; q < K; ++q) {
-                    int h_unroll = w_base + p * K + q;
-                    int w_unroll = h * W_out + w;
-                    unroll_4d(b,h_unroll, w_unroll) = in_4d(b,c,h * S + p, w * S + q);
+    if(w < W_out && h < H_out) {
+        register __half acc = 0.0f;
+        for(int c = 0 ; c < C; c++) {
+            for(int p = 0; p < K; p++) {
+                for(int q = 0; q < K; q++) {
+                    acc += __float2half(in_4d(b, c, h * S + p, w * S + q)) * __float2half(mask_4d(m,c,p,q));
                 }
             }
-        // }
-    }
-    #undef in_4d
-    #undef unroll_4d
-}
-
-/* convolution using tiled matrix multiplication */
-/* X, Y dimension maps to matrix dimesion, Z is image number */
-__global__ void conv_forward_kernel_multiply(float *output, const float *input, const float *mask, const int B, const int M, const int C, const int H, const int W, const int K,const int S)
-{
-
-    int H_out = (H - K) / S + 1;
-    int W_out = (W - K) / S + 1;
-
-    // A is mask, B is input_unrolled, C is multiplication result
-    int numARows = M;
-    int numAColumns = K * K * C;
-    int numBRows = numAColumns;
-    int numBColumns = H_out * W_out;
-    int numCRows = numARows;
-    int numCColumns = numBColumns;
-
-    int b = blockIdx.z;
-
-    // Tiled approach
-    __shared__ float subTileA[TILE_WIDTH][TILE_WIDTH];
-    __shared__ float subTileB[TILE_WIDTH][TILE_WIDTH];
-    int bx = blockIdx.x; int by = blockIdx.y;
-    int tx = threadIdx.x; int ty = threadIdx.y;
-    int Row = by * TILE_WIDTH + ty;
-    int Col = bx * TILE_WIDTH + tx;
-    float Cval = 0;
-
-    for(int q = 0; q < (numAColumns - 1) / TILE_WIDTH + 1; q++) {
-        if(Row < numARows && q * TILE_WIDTH + tx < numAColumns)
-            subTileA[ty][tx] = mask[Row * numAColumns + q * TILE_WIDTH + tx];
-        else
-            subTileA[ty][tx] = 0;
-        if(q * TILE_WIDTH + ty < numBRows && Col < numBColumns)
-            subTileB[ty][tx] = input[b * numBRows * numBColumns + (q * TILE_WIDTH + ty) * numBColumns + Col];
-        else
-            subTileB[ty][tx] = 0;
-        __syncthreads();
-        if(Row < numCRows && Col < numCColumns) {
-            for(int k = 0; k < TILE_WIDTH; k++)
-                Cval += subTileA[ty][k] * subTileB[k][tx];
         }
-        __syncthreads();
+        out_4d(b,m,h,w) = __half2float(acc);
     }
 
-    if(Row < numCRows && Col < numCColumns)
-        output[b * numCRows * numCColumns + Row * numCColumns + Col] = Cval;
-
+    #undef out_4d
+    #undef in_4d
+    #undef mask_4d
 }
+
 	
 __host__ void GPUInterface::conv_forward_gpu_prolog(const float *host_output, const float *host_input, const float *host_mask, float **device_output_ptr, float **device_input_ptr, float **device_mask_ptr, const int B, const int M, const int C, const int H, const int W, const int K, const int S)
 {
@@ -117,21 +87,9 @@ __host__ void GPUInterface::conv_forward_gpu(float *device_output, const float *
     const int W_out = (W - K)/S + 1;
     int W_grid = ceil((W_out * 1.0) / (TILE_WIDTH * 1.0));
     int H_grid = ceil((H_out * 1.0) / (TILE_WIDTH * 1.0));
-
-    float* unroll_input;
-    int num_unroll_input_elts = B * K * K * C * H_out * W_out;
-    wbCheck(cudaMalloc((void**)&unroll_input, num_unroll_input_elts * sizeof(float)));
-
-    // unroll: B(C * K * K, H_out * W_out)
-    dim3 gridDim_u(C, W_grid * H_grid, B);
-    dim3 blockDim_u(TILE_WIDTH, TILE_WIDTH,1);
-    unroll_input_kernel<<<gridDim_u, blockDim_u>>>(B,C,H,W,K,S,device_input, unroll_input);
-
-    // matrix multiplication
-    dim3 gridDim_m(ceil((1.0 * H_out * W_out) / (1.0 * TILE_WIDTH)), ceil((1.0 * M) / (1.0 * TILE_WIDTH)),B);
-    dim3 blockDim_m(TILE_WIDTH, TILE_WIDTH, 1);
-    conv_forward_kernel_multiply<<<gridDim_m, blockDim_m>>>(device_output, unroll_input, device_mask, B, M, C, H, W, K, S);
-    wbCheck(cudaFree(unroll_input));
+    dim3 blockDim(TILE_WIDTH, TILE_WIDTH,1);
+    dim3 gridDim(M, W_grid * H_grid, B);
+    conv_forward_kernel<<<gridDim, blockDim>>>(device_output, device_input, device_mask, B, M, C, H, W, K, S);
 
 }
 
