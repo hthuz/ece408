@@ -1,0 +1,435 @@
+---------------------------
+TILE_SIZE = 1
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 599.994 ms
+Op Time: 260.976 ms
+Conv-GPU==
+Layer Time: 913.462 ms
+Op Time: 652.054 ms
+
+Test Accuracy: 0.871
+
+
+real	0m54.431s
+user	0m53.359s
+sys	0m1.024s
+
+---------------------------
+TILE_SIZE = 2
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 424.599 ms
+Op Time: 72.5993 ms
+Conv-GPU==
+Layer Time: 417.861 ms
+Op Time: 169.339 ms
+
+Test Accuracy: 0.871
+
+
+real	0m51.131s
+user	0m50.130s
+sys	0m1.024s
+
+---------------------------
+TILE_SIZE = 4
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 370.8 ms
+Op Time: 20.1502 ms
+Conv-GPU==
+Layer Time: 363.945 ms
+Op Time: 53.6933 ms
+
+Test Accuracy: 0.871
+
+
+real	0m56.476s
+user	0m55.426s
+sys	0m1.068s
+
+
+---------------------------
+TILE_SIZE = 5
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 360.975 ms
+Op Time: 14.5488 ms
+Conv-GPU==
+Layer Time: 300.281 ms
+Op Time: 37.1401 ms
+
+Test Accuracy: 0.871
+
+
+real	0m54.251s
+user	0m53.136s
+sys	0m1.084s
+
+---------------------------
+TILE_SIZE = 8
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 455.313 ms
+Op Time: 8.92792 ms
+Conv-GPU==
+Layer Time: 279.577 ms
+Op Time: 27.3833 ms
+
+Test Accuracy: 0.871
+
+
+real	0m58.561s
+user	0m57.285s
+sys	0m1.184s
+
+---------------------------
+TILE_SIZE = 10
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 360.72 ms
+Op Time: 11.2791 ms
+Conv-GPU==
+Layer Time: 283.08 ms
+Op Time: 34.1279 ms
+
+Test Accuracy: 0.871
+
+---------------------------
+TILE_SIZE = 12
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 370.535 ms
+Op Time: 10.2794 ms
+Conv-GPU==
+Layer Time: 283.53 ms
+Op Time: 26.7074 ms
+
+Test Accuracy: 0.871
+
+
+real	0m52.212s
+user	0m51.153s
+sys	0m1.036s
+
+---------------------------
+TILE_SIZE = 15
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 364.048 ms
+Op Time: 11.4156 ms
+Conv-GPU==
+Layer Time: 282.519 ms
+Op Time: 33.2574 ms
+
+Test Accuracy: 0.871
+
+
+real	0m53.039s
+user	0m51.895s
+sys	0m1.093s
+
+real	0m53.388s
+user	0m52.435s
+sys	0m0.936s
+---------------------------
+TILE_SIZE = 16
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 364.585 ms
+Op Time: 8.39493 ms
+Conv-GPU==
+Layer Time: 284.19 ms
+Op Time: 31.4207 ms
+
+Test Accuracy: 0.871
+
+
+real	0m51.679s
+user	0m50.553s
+sys	0m1.076s
+
+---------------------------
+TILE_SIZE = 17
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 346.195 ms
+Op Time: 9.65714 ms
+Conv-GPU==
+Layer Time: 277.983 ms
+Op Time: 23.6028 ms
+
+Test Accuracy: 0.871
+
+
+real	0m51.856s
+user	0m50.939s
+sys	0m0.908s
+
+---------------------------
+TILE_SIZE = 18
+---------------------------
+✱ Running bash -c "time ./m3 5000"   \\ Output will appear after run is complete.
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 363.611 ms
+Op Time: 10.9428 ms
+Conv-GPU==
+Layer Time: 343.619 ms
+Op Time: 25.3462 ms
+
+Test Accuracy: 0.871
+
+
+real	0m57.541s
+user	0m56.236s
+sys	0m1.288s
+
+
+---------------------------
+TILE_SIZE = 19
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 353.011 ms
+Op Time: 11.4304 ms
+Conv-GPU==
+Layer Time: 286.153 ms
+Op Time: 26.844 ms
+
+Test Accuracy: 0.871
+
+
+real	0m51.261s
+user	0m50.244s
+sys	0m1.040s
+
+---------------------------
+TILE_SIZE = 20
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 359.74 ms
+Op Time: 8.38182 ms
+Conv-GPU==
+Layer Time: 348.143 ms
+Op Time: 27.7886 ms
+
+Test Accuracy: 0.871
+
+
+real	0m55.457s
+user	0m54.381s
+sys	0m1.056s
+
+---------------------------
+TILE_SIZE = 24
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 356.825 ms
+Op Time: 10.039 ms
+Conv-GPU==
+Layer Time: 284.124 ms
+Op Time: 30.2711 ms
+
+Test Accuracy: 0.871
+
+
+real	0m51.331s
+user	0m50.282s
+sys	0m1.060s
+---------------------------
+TILE_SIZE = 32
+---------------------------
+Running test case 1
+B = 1 M = 3 C = 3 H = 224 W = 224 K = 3 S = 1
+Running test case 2
+B = 2 M = 3 C = 3 H = 301 W = 301 K = 3 S = 2
+Running test case 3
+B = 3 M = 3 C = 3 H = 196 W = 196 K = 3 S = 3
+Running test case 4
+B = 4 M = 3 C = 3 H = 239 W = 239 K = 3 S = 4
+All test cases passed
+Test batch size: 5000
+Loading fashion-mnist data...Done
+Loading model...Done
+Conv-GPU==
+Layer Time: 343.206 ms
+Op Time: 10.8295 ms
+Conv-GPU==
+Layer Time: 303.589 ms
+Op Time: 49.4337 ms
+
+Test Accuracy: 0.871
+
+
+real	0m53.572s
+user	0m52.587s
+sys	0m0.984s
+
