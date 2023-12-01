@@ -6,5 +6,6 @@ This directory includes all optimization implemented.
 `fp16.cu` - FP16 arithmetic  
 `fusion.cu` - Kernel ufsion for unrolling and matrix multiplication and input matrix unrolling   
 `shared.cu` - Tiled shared memory convolution  
+`sweeping.cu` - Sweeping various parameters to find best values
 `unrolled.cu` - Shared memory matrix multiplication and input matrix unrolling  
 
