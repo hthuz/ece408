@@ -85,7 +85,7 @@ __host__ void GPUInterface::conv_forward_gpu_prolog(const float *host_output, co
 
     wbCheck(cudaMalloc((void**)device_input_ptr, num_input_elts * sizeof(float)));
     wbCheck(cudaMalloc((void**)device_output_ptr, num_output_elts * sizeof(float)));
-    wbCheck(cudaMemcpy(*device_input_ptr, host_input, num_input_elts * sizeof(float), cudaMemcpyHostToDevice));
+    // wbCheck(cudaMemcpy(*device_input_ptr, host_input, num_input_elts * sizeof(float), cudaMemcpyHostToDevice));
     wbCheck(cudaMalloc((void**)device_mask_ptr, num_mask_elts * sizeof(float)));
     wbCheck(cudaMemcpy(*device_mask_ptr, host_mask, num_mask_elts * sizeof(float), cudaMemcpyHostToDevice));
 
